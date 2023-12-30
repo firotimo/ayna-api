@@ -151,3 +151,13 @@ async def read_geonames(
 
     return geonames
 app.include_router(router)
+# Allow all origins during development, replace this with your actual frontend origin in production
+origins = ["https://icy-forest-0ae3f0503.4.azurestaticapps.net"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
