@@ -1,14 +1,15 @@
-import azure.functions as func
-import fastapi
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException, status, APIRouter, FastAPI, HTTPException, Query
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
-from typing import List
-import uvicorn
-from typing import Any
+from typing import Any, List, Optional
 from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import create_engine, Column, Integer, String, func as sqlunc
+import azure.functions as func
+import fastapi
+from .models import *
+
 app = fastapi.FastAPI()
 
 
@@ -17,6 +18,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 Base = declarative_base()
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 class GeoName(Base):
     __tablename__ = 'geonamespop'
@@ -40,6 +42,8 @@ class GeoName(Base):
     dem = Column(String)
     timezone = Column(String)
     modification_date = Column(String)
+
+# Pydantic model for request and response
 class GeoNameRequest(BaseModel):
     geonameid: int
     name: str
@@ -60,6 +64,7 @@ class GeoNameRequest(BaseModel):
     dem: str
     timezone: str
     modification_date: str
+
 class GeoNameResponse(BaseModel):
     geonameid: int
     name: str
@@ -81,12 +86,68 @@ class GeoNameResponse(BaseModel):
     timezone: str
     modification_date: Any
 
-@app.get("/geonames/{city_name}", response_model=GeoNameResponse)
-async def read_geoname(city_name: str):
+
+router = APIRouter()
+@router.get("/geonames/", response_model=List[GeoNameResponse])
+async def read_geonames(
+    city_name: str = Query(..., description="The name of the city."),
+    country_code: Optional[str] = Query(None, description="The country code."),
+):
+    """
+    Get geonames based on a city name and an optional country code.
+
+    Parameters:
+    - city_name (str): The name of the city.
+    - country_code (str, optional): The country code.
+
+    Returns:
+    - List[GeoNameResponse]: List of geonames matching the city name and, optionally, the country code.
+    """
     db = SessionLocal()
-    geoname = db.query(GeoName).filter(GeoName.name == city_name, GeoName.population > 0).first()
-    print(geoname)
+
+    try:
+        query = db.query(GeoName).filter(sqlunc.lower(GeoName.name).startswith(sqlunc.lower(city_name)))
+
+        if country_code is not None:
+            query = query.filter(GeoName.country_code == country_code)
+
+        geonames = (
+            query
+            .limit(10)
+            .all()
+        )
+
+        if not geonames:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No geonames found for {city_name} in {country_code}" if country_code else f"No geonames found for {city_name}",
+            )
+
+        # Convert GeoName instances to GeoNameResponse instances if needed
+        # geo_name_responses = [GeoNameResponse(**item.dict()) for item in geonames]
+        return geonames
+    finally:
+        db.close()
+
+@router.get("/geonames/getone/")
+async def read_geonames(
+    city_name: str = Query(..., description="The name of the city."),
+):
+    db = SessionLocal()
+
+    # Order the results by Levenshtein distance, with the closest match first
+    geonames = (
+        db.query(GeoName)
+        .filter(sqlunc.lower(GeoName.name).contains(sqlunc.lower(city_name)))
+        .order_by(sqlunc.levenshtein(sqlunc.lower(GeoName.name), sqlunc.lower(city_name)))
+        .first()
+        .all()
+    )
+
     db.close()
-    if geoname is None:
-        raise HTTPException(status_code=404, detail="Geoname not found")
-    return geoname
+
+    if not geonames:
+        raise HTTPException(status_code=404, detail="No geonames found")
+
+    return geonames
+app.include_router(router)
