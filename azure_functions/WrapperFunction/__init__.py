@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status, APIRouter, FastAPI, HTTPException, Query
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
 from typing import Any, List, Optional
