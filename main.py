@@ -156,7 +156,7 @@ async def read_geonames(
 
 app.include_router(router)
 # Allow all origins during development, replace this with your actual frontend origin in production
-origins = ["http://localhost:4200"]
+origins = ["http://localhost:4200","https://icy-forest-0ae3f0503.4.azurestaticapps.net"]
 
 app.add_middleware(
     CORSMiddleware,

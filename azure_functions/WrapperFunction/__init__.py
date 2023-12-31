@@ -10,8 +10,13 @@ from sqlalchemy import create_engine, Column, Integer, String, func as sqlunc
 import azure.functions as func
 import fastapi
 from .models import *
+import os
 
 app = fastapi.FastAPI()
+
+# access sensitive credentials from Azure Key Vault
+host = os.getenv('AzureWebJobsFeatureFlags')
+print("host",host)
 
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Root12zdz@bddkokatic.postgres.database.azure.com:5432/postgres"
@@ -153,7 +158,7 @@ async def read_geonames(
     return geonames
 app.include_router(router)
 # Allow all origins during development, replace this with your actual frontend origin in production
-origins = ["https://icy-forest-0ae3f0503.4.azurestaticapps.net"]
+origins = ["https://icy-forest-0ae3f0503.4.azurestaticapps.net","http://localhost:4200"]
 
 app.add_middleware(
     CORSMiddleware,
