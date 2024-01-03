@@ -8,8 +8,8 @@ from typing import Any, List, Optional
 import uvicorn
 
 # Replace 'postgresql://user:password@localhost/dbname' with your PostgreSQL connection string
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:root@localhost:5432/postgres"
-
+#SQLALCHEMY_DATABASE_URL = "postgresql://postgres:root@localhost:5432/postgres"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Root12zdz@bddkokatic.postgres.database.azure.com:5432/postgres"
 # Create a SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -23,7 +23,7 @@ app = FastAPI()
 from sqlalchemy import Column, Integer, String, Float
 
 class GeoName(Base):
-    __tablename__ = 'geonamescity'
+    __tablename__ = 'geonames'
 
     geonameid = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -115,7 +115,6 @@ async def read_geonames(
 
         geonames = (
             query
-            .order_by(func.levenshtein(func.lower(GeoName.name), func.lower(city_name)))
             .limit(10)
             .all()
         )
