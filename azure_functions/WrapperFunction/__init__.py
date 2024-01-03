@@ -16,15 +16,12 @@ app = fastapi.FastAPI()
 
 # access sensitive credentials from Azure Key Vault
 host = os.getenv('AzureWebJobsFeatureFlags')
-print("host",host)
-
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Root12zdz@bddkokatic.postgres.database.azure.com:5432/postgres"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 Base = declarative_base()
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 class GeoName(Base):
     __tablename__ = 'geonamespop_parent'
@@ -48,8 +45,6 @@ class GeoName(Base):
     dem = Column(String)
     timezone = Column(String)
     modification_date = Column(String)
-
-# Pydantic model for request and response
 class GeoNameRequest(BaseModel):
     geonameid: int
     name: str
@@ -70,7 +65,6 @@ class GeoNameRequest(BaseModel):
     dem: str
     timezone: str
     modification_date: str
-
 class GeoNameResponse(BaseModel):
     geonameid: int
     name: str
@@ -91,7 +85,6 @@ class GeoNameResponse(BaseModel):
     dem: str
     timezone: str
     modification_date: Any
-
 
 router = APIRouter()
 @router.get("/geonames/", response_model=List[GeoNameResponse])
@@ -135,27 +128,6 @@ async def read_geonames(
     finally:
         db.close()
 
-@router.get("/geonames/getone/")
-async def read_geonames(
-    city_name: str = Query(..., description="The name of the city."),
-):
-    db = SessionLocal()
-
-    # Order the results by Levenshtein distance, with the closest match first
-    geonames = (
-        db.query(GeoName)
-        .filter(sqlunc.lower(GeoName.name).contains(sqlunc.lower(city_name)))
-        .order_by(sqlunc.levenshtein(sqlunc.lower(GeoName.name), sqlunc.lower(city_name)))
-        .first()
-        .all()
-    )
-
-    db.close()
-
-    if not geonames:
-        raise HTTPException(status_code=404, detail="No geonames found")
-
-    return geonames
 app.include_router(router)
 # Allow all origins during development, replace this with your actual frontend origin in production
 origins = ["https://icy-forest-0ae3f0503.4.azurestaticapps.net","http://localhost:4200"]
