@@ -27,7 +27,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class GeoName(Base):
-    __tablename__ = 'geonamespop'
+    __tablename__ = 'geonamespop_parent'
 
     geonameid = Column(Integer, primary_key=True, index=True)
     name = Column(String)
