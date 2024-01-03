@@ -23,8 +23,9 @@ Base = declarative_base()
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 class GeoName(Base):
-    __tablename__ = 'geonamespop_parent'
+    __tablename__ = 'geonamespop'
 
     geonameid = Column(Integer, primary_key=True, index=True)
     name = Column(String)
