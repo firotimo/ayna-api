@@ -83,7 +83,7 @@ class GeoNameResponse(BaseModel):
     admin4_code: Any
     population: int
     elevation: Any
-    dem: str
+    dem: Any
     timezone: str
     modification_date: Any
 
