@@ -113,7 +113,7 @@ async def read_geonames(
 
         geonames = (
             query
-            .limit(7)
+            .limit(5)
             .all()
         )
 
